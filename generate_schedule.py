@@ -29,15 +29,26 @@ def save_schedule(start: date, end: date):
     """save a schedule to csv"""
     df = create_schedule(start, end)
     df.to_csv("schedule.csv",index=False)
+    return df
 
-def get_schedule()->pd.DataFrame:
-    return pd.read_csv("schedule.csv")
+def get_schedule(df=None)->pd.DataFrame:
+    if df is not None:
+        df['day'] = df['day'].apply(lambda x: str(x))
+        return df
+    else:
+        return pd.read_csv("schedule.csv")
 
-def get_today_schedule():
+def get_today_schedule(df=None):
     """print the schedule of specific days"""
-    df = get_schedule()
+    df = get_schedule(df)
     df.set_index("day",inplace=True)
     df = df[df.index==str(date.today())]
+    print(tabulate(df, headers="keys",tablefmt="psql",showindex=True))
+
+def get_all_schedule(df=None):
+    """print full schedule"""
+    df = get_schedule(df)
+    df.set_index("day",inplace=True)
     print(tabulate(df, headers="keys",tablefmt="psql",showindex=True))
 
 def ask_mode():
@@ -45,7 +56,7 @@ def ask_mode():
         'type': 'list',
         'name': 'mode',
         'message': 'Menu',
-        'choices': ["Today's schedule", "Create new schedule"],
+        'choices': ["Today's schedule", "Create new schedule", "Check full schedule"],
         'default': "Today's schedule"
     }
     answers = prompt(mode_prompt)
@@ -72,11 +83,13 @@ def main():
     mode = ask_mode()
     if mode == "Create new schedule":
         date_answer = ask_date()
-        save_schedule(date_answer['start_date'],date_answer['end_date'])
-        print("FYI today's schedule:")
+        df = save_schedule(date_answer['start_date'],date_answer['end_date'])
+        print("FYI toady your schedule is:\n")
+        get_today_schedule(df)
+    elif mode == "Today's schedule":
         get_today_schedule()
     else:
-        get_today_schedule()
+        get_all_schedule()
 
 if __name__ == "__main__":
     main()
